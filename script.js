@@ -107,10 +107,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 7. Contact Form Handling (Future API Hookup)
+    // 7. Contact Form Handling (Connected to API)
     const contactForm = document.getElementById('contactForm');
     if (contactForm) {
-        contactForm.addEventListener('submit', (e) => {
+        contactForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = contactForm.querySelector('button');
             const originalText = btn.innerText;
@@ -118,18 +118,39 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.innerText = 'Sending...';
             btn.style.opacity = '0.8';
 
-            // Simulate form submission to backend
-            setTimeout(() => {
-                btn.innerText = 'Message Sent!';
-                btn.style.background = '#10b981'; // Success green
-                contactForm.reset();
+            // Get form values
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const message = document.getElementById('message').value;
 
-                setTimeout(() => {
-                    btn.innerText = originalText;
-                    btn.style.background = ''; // reset to default CSS
-                    btn.style.opacity = '1';
-                }, 3000);
-            }, 1000);
+            try {
+                // Send data to backend
+                const response = await fetch(`${BACKEND_URL}/api/messages`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, message }),
+                });
+
+                if (response.ok) {
+                    btn.innerText = 'Message Sent!';
+                    btn.style.background = '#10b981'; // Success green
+                    contactForm.reset();
+                } else {
+                    btn.innerText = 'Failed to Send';
+                    btn.style.background = '#ef4444'; // Error red
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                btn.innerText = 'Server Error';
+                btn.style.background = '#ef4444'; // Error red
+            }
+
+            // Reset button after 3 seconds
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.style.background = ''; // reset to default CSS
+                btn.style.opacity = '1';
+            }, 3000);
         });
     }
 });

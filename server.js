@@ -28,7 +28,20 @@ const pool = new Pool({
 });
 
 pool.connect()
-  .then(() => console.log('Connected to PostgreSQL successfully.'))
+  .then(() => {
+    console.log('Connected to PostgreSQL successfully.');
+    // Create messages table automatically if it doesn't exist
+    return pool.query(`
+      CREATE TABLE IF NOT EXISTS messages (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        email VARCHAR(100) NOT NULL,
+        message TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+  })
+  .then(() => console.log('Messages table is ready.'))
   .catch(err => console.error('Connection error', err.stack));
 
 // Basic API Endpoint
@@ -36,14 +49,23 @@ app.get('/api/status', (req, res) => {
   res.json({ message: 'Backend is running and connected to PostgreSQL' });
 });
 
-// Example Data Route (Replace with your actual table and columns)
-app.get('/api/data', async (req, res) => {
+// Handle Contact Form Submissions
+app.post('/api/messages', async (req, res) => {
+  const { name, email, message } = req.body;
+  
+  if (!name || !email || !message) {
+    return res.status(400).json({ error: 'Name, email, and message are required' });
+  }
+
   try {
-    const result = await pool.query('SELECT NOW()');
-    res.json(result.rows);
+    const query = 'INSERT INTO messages (name, email, message) VALUES ($1, $2, $3)';
+    const values = [name, email, message];
+    await pool.query(query, values);
+    
+    res.status(201).json({ success: true, message: 'Message saved successfully!' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Database insert error:', err);
+    res.status(500).json({ error: 'Failed to save message' });
   }
 });
 
