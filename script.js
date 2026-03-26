@@ -1,5 +1,6 @@
 // Example connecting the frontend to your PostgreSQL backend
-const BACKEND_URL = 'http://localhost:3000';
+// Automatically use localhost if opened directly, otherwise use the live Render URL
+const BACKEND_URL = window.location.origin.startsWith('file') ? 'http://localhost:3000' : '';
 
 // Note: Ensure the backend is running `node server.js`
 async function fetchStatus() {
