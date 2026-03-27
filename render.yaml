@@ -2,11 +2,13 @@ databases:
   - name: portfolio-db
     databaseName: portfoliodb
     user: portfolio_user
+    plan: free
 
 services:
   - type: web
     name: portfolio-app
     env: node
+    plan: free
     buildCommand: npm install
     startCommand: npm start
     envVars:
