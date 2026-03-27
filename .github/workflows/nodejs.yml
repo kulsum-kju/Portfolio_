@@ -23,5 +23,13 @@ jobs:
     - name: Install dependencies
       run: npm install
 
-    - name: Success Confirmation
-      run: echo "🎉 Code was successfully integrated and ready for Render Auto-Deploy!"
+  deploy:
+    name: Deploy to Render
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Trigger Deployment Webhook
+        run: |
+          curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          echo "🚀 Deployment triggered on Render!"
