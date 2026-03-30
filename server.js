@@ -25,11 +25,14 @@ app.get('/script.js', (req, res) => {
 // PostgreSQL Connection Pool
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DATABASE_URL.includes('onrender.com') || process.env.DATABASE_URL.includes('localhost') ? false : { rejectUnauthorized: false }
 });
 
+// Real check for DB connection
 pool.connect()
-  .then(() => {
+  .then(client => {
     console.log('Connected to PostgreSQL successfully.');
+    client.release();
     // Create messages table automatically if it doesn't exist
     return pool.query(`
       CREATE TABLE IF NOT EXISTS messages (
@@ -42,11 +45,18 @@ pool.connect()
     `);
   })
   .then(() => console.log('Messages table is ready.'))
-  .catch(err => console.error('Connection error', err.stack));
+  .catch(err => {
+    console.error('❌ Database connection error:', err.message);
+  });
 
-// Basic API Endpoint
-app.get('/api/status', (req, res) => {
-  res.json({ message: 'Backend is running and connected to PostgreSQL' });
+// Real Status Endpoint
+app.get('/api/status', async (req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    res.json({ status: 'OK', message: 'Backend is running and connected to PostgreSQL' });
+  } catch (err) {
+    res.status(500).json({ status: 'ERROR', message: 'Database connection failed', error: err.message });
+  }
 });
 
 // Handle Contact Form Submissions
